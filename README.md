@@ -3,7 +3,7 @@
 Serve this local, dependency-free page on the second display:
 
 ```sh
-cd tools/v0-web-stimulus
+cd sync-it-web-test
 python3 -m http.server 8000
 ```
 
@@ -21,6 +21,26 @@ are never physical timing truth. Each event is a sharp black-to-white leading
 transition followed by an intended white hold and a sharp return to black. The
 leading optical transition is the feature for phone analysis; the trailing
 transition is not scored.
+
+## Protocol and build identity
+
+The page always shows a quiet identity line below the controls. For the normal
+volunteer path its protocol ID is `V0_WEB_QUICK_V1`; the build ID is the
+immutable `WEB_STIMULUS_BUILD` string exported by `protocols.js`. The same
+values are available to automation as `window.SyncItWebTestIdentity` and as
+`data-sync-it-protocol-id` / `data-sync-it-build-id` attributes on the root
+`html` element.
+
+The build ID is the Git-hash-equivalent release stamp for this dependency-free
+static deployment. Its format is
+`v0-web-stimulus-YYYYMMDD-<change>-<revision>`. Before deploying changed page
+source, advance `WEB_STIMULUS_BUILD` to a new value and update its assertion in
+`protocols.test.js` in the same commit. The public deployment serves the
+checked-in files unchanged, so the Git commit and unique build string together
+identify the exact page source. Run `node protocols.test.js` and
+`node identity.test.js` before deployment; the tests also freeze the Quick
+protocol structure and 29,946 ms duration and check that the displayed, DOM,
+and global identities agree.
 
 Quick uses a 40 ms intended browser-time white hold for every LOCK,
 QUICK_SWEEP, and CONFIRM event. It remains a browser scheduling intent, not a
@@ -54,7 +74,7 @@ console and page show non-physical diagnostics. Run the lightweight scheduler
 test with:
 
 ```sh
-node tools/v0-web-stimulus/stimulus.test.js
+node stimulus.test.js
 ```
 
 ## Developer render-alignment comparison

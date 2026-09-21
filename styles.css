@@ -33,6 +33,7 @@ header,.controls { display:flex; gap:12px; justify-content:center; align-items:c
 #target.flash[data-pulse-region="VERTICAL_90"]::after { top:83%; }
 button { font:inherit; padding:10px 16px; }
 #detail,#protocol,#diagnostics { color:#c8c8c8; }
+#test-identity { margin:8px 0 0; color:#777; font:12px/1.4 ui-monospace,monospace; }
 .developer-controls { margin:14px auto; max-width:1100px; text-align:left; }
 .developer-controls summary { cursor:pointer; color:#c8c8c8; }
 #diagnostics { overflow-wrap:anywhere; font:12px/1.4 ui-monospace,monospace; }

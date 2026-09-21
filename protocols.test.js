@@ -1,9 +1,15 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { WEB_STIMULUS_BUILD, PROTOCOLS, protocolDurationMs } = require('./protocols.js');
+const { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, protocolDurationMs } = require('./protocols.js');
 
-assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260912-five-band-render-2');
+assert.equal(DEFAULT_PROTOCOL_ID, 'V0_WEB_QUICK_V1');
+assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260921-identity-1');
+assert.deepStrictEqual(WEB_TEST_IDENTITY, {
+  protocolId: 'V0_WEB_QUICK_V1',
+  buildId: 'v0-web-stimulus-20260921-identity-1'
+});
+assert.ok(Object.isFrozen(WEB_TEST_IDENTITY));
 
 // Existing public protocols are deliberate contracts and must not change when
 // the developer-only mechanism experiment is added.
@@ -52,6 +58,15 @@ const styles = fs.readFileSync(path.join(__dirname, 'styles.css'), 'utf8');
 assert.match(styles, /#target\.flash\[data-pulse-region="CENTRAL_TARGET"\]\s*\{\s*position:relative;\s*background-color:#000;\s*background-image:none;/, 'the temporal central pulse keeps its surrounding stage black');
 const page = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 assert.match(page, /id="build-version"/, 'the developer page exposes the loaded stimulus build');
+assert.match(page, /id="test-identity"/, 'the page exposes unobtrusive protocol and build identity');
+assert.match(page, /styles\.css\?v=20260921-identity-1/, 'the identity style has a dedicated cache version');
+assert.match(page, /protocols\.js\?v=20260921-identity-1/, 'the identity-bearing protocol script has a dedicated cache version');
+assert.match(page, /stimulus\.js\?v=20260921-identity-1/, 'the identity-rendering script has a dedicated cache version');
+const stimulus = fs.readFileSync(path.join(__dirname, 'stimulus.js'), 'utf8');
+assert.match(stimulus, /window\.SyncItWebTestIdentity=WEB_TEST_IDENTITY/, 'identity is exposed as frozen global state');
+assert.match(stimulus, /dataset\.syncItProtocolId=WEB_TEST_IDENTITY\.protocolId/, 'protocol identity is exposed in the DOM');
+assert.match(stimulus, /dataset\.syncItBuildId=WEB_TEST_IDENTITY\.buildId/, 'build identity is exposed in the DOM');
+assert.match(stimulus, /querySelector\('#quick'\)\.onclick=\(\)=>run\('V0_WEB_QUICK_V1'\)/, 'normal Start web test path remains Quick V1');
 assert.strictEqual(protocolDurationMs('V0_WEB_TEMPORAL_CADENCE_SWEEP_V1'), 44200);
 
 const cameraSession = PROTOCOLS.V0_WEB_CAMERA_SESSION_PHASE_V1;
@@ -70,6 +85,5 @@ assert.strictEqual(protocolDurationMs('V0_WEB_FIVE_BAND_SCANOUT_LADDER_V1'), 523
 assert.match(styles, /five-band-scanout-landmark/, 'five bands are explicit landmark elements');
 assert.match(styles, /data-five-band-active="true"/, 'one parent state activates all five bands');
 assert.match(styles, /FIVE_BAND_LADDER[\s\S]*background-color:#000 !important/, 'the stage remains black during the ladder pulse');
-assert.match(page, /styles\.css\?v=20260912-five-band-ladder-1/, 'the ladder stylesheet has a dedicated cache version');
 
 console.log('V0 web protocol contracts passed');

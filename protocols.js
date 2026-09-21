@@ -4,9 +4,10 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.V0WebProtocols = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, () => {
-  // Visible in the developer panel so a physical test can confirm the loaded
-  // temporal source build, rather than relying on a cached page by inference.
-  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20260912-five-band-render-2';
+  // Immutable public-deployment identity. Advance the build string whenever
+  // the deployed source changes; protocol definitions remain independent.
+  const DEFAULT_PROTOCOL_ID = 'V0_WEB_QUICK_V1';
+  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20260921-identity-1';
   const PROTOCOLS = {
     V0_WEB_QUICK_V1: [
       ['EPOCH',[250,250],0,1,40,['FULL_TARGET']], ['LOCK',[250,350],5,1000,40,['FULL_TARGET']],
@@ -65,5 +66,9 @@
     ]
   };
   const protocolDurationMs = protocol => PROTOCOLS[protocol].reduce((total, [, , count, cadence, , , markerDurationMs = 1000]) => total + markerDurationMs + count * cadence, 0);
-  return { WEB_STIMULUS_BUILD, PROTOCOLS, protocolDurationMs };
+  const WEB_TEST_IDENTITY = Object.freeze({
+    protocolId: DEFAULT_PROTOCOL_ID,
+    buildId: WEB_STIMULUS_BUILD
+  });
+  return { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, protocolDurationMs };
 });

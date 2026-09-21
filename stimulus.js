@@ -1,6 +1,10 @@
 /* Scheduling diagnostics are provenance only: they are never physical light/audio timestamps. */
-const { PROTOCOLS, WEB_STIMULUS_BUILD } = window.V0WebProtocols;
-const target=document.getElementById('target'), status=document.querySelector('#status'), protocolText=document.querySelector('#protocol'), diagnosticsText=document.querySelector('#diagnostics'), buildText=document.querySelector('#build-version');
+const { PROTOCOLS, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY } = window.V0WebProtocols;
+const target=document.getElementById('target'), status=document.querySelector('#status'), protocolText=document.querySelector('#protocol'), diagnosticsText=document.querySelector('#diagnostics'), buildText=document.querySelector('#build-version'), identityText=document.querySelector('#test-identity');
+window.SyncItWebTestIdentity=WEB_TEST_IDENTITY;
+document.documentElement.dataset.syncItProtocolId=WEB_TEST_IDENTITY.protocolId;
+document.documentElement.dataset.syncItBuildId=WEB_TEST_IDENTITY.buildId;
+identityText.textContent=`Protocol ${WEB_TEST_IDENTITY.protocolId} · Build ${WEB_TEST_IDENTITY.buildId}`;
 buildText.textContent=`Loaded stimulus build: ${WEB_STIMULUS_BUILD}`;
 const controls=['quick','extended','developer-vertical-phase-diversity','developer-vertical-dense-sweep','developer-temporal-cadence-sweep','developer-camera-session-phase','developer-five-band-scanout','stop'].map(id=>document.getElementById(id)); let state;
 const protocolButtons=['quick','extended','developer-vertical-phase-diversity','developer-vertical-dense-sweep','developer-temporal-cadence-sweep','developer-camera-session-phase','developer-five-band-scanout'].map(id=>document.getElementById(id));
