@@ -1,5 +1,6 @@
 /* Scheduling diagnostics are provenance only: they are never physical light/audio timestamps. */
 const { PROTOCOLS, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY } = window.V0WebProtocols;
+const WEB_TEST_UI_MODE=window.SyncItWebUiMode.apply(document,window.location.search);
 const target=document.getElementById('target'), status=document.querySelector('#status'), protocolText=document.querySelector('#protocol'), diagnosticsText=document.querySelector('#diagnostics'), buildText=document.querySelector('#build-version'), identityText=document.querySelector('#test-identity');
 window.SyncItWebTestIdentity=WEB_TEST_IDENTITY;
 document.documentElement.dataset.syncItProtocolId=WEB_TEST_IDENTITY.protocolId;
@@ -68,14 +69,14 @@ async function developerComparison(mode) {
     developerComparisonButtons.forEach(button=>button.disabled=false);
   }
 }
-async function run(id) { const ctx=new AudioContext(); await ctx.resume(); const events=[]; state={cancelled:false,ctx,events}; controls.forEach(b=>b.disabled=true); document.querySelector('#stop').disabled=false;
+async function run(id) { const ctx=new AudioContext(); await ctx.resume(); const events=[]; state={cancelled:false,ctx,events}; controls.forEach(b=>b.disabled=true); document.querySelector('#stop').disabled=false; window.SyncItWebUiMode.setRunning(document,WEB_TEST_UI_MODE,true); if(!WEB_TEST_UI_MODE.developer)status.textContent='Running';
   let t=ctx.currentTime+.25, cycle=0;
   while (!state.cancelled) for (const [block,gaps,count,cadence,intendedOnHoldMs,spatial,markerDurationMs=1000] of PROTOCOLS[id]) { if(state.cancelled) break; protocolText.textContent=`${id} · ${block} · ${WEB_STIMULUS_BUILD}`;
     // Marker triple is deliberately non-measurement. Its two gaps identify the block.
     tone(ctx,t); tone(ctx,t+gaps[0]/1000); tone(ctx,t+(gaps[0]+gaps[1])/1000); t+=markerDurationMs/1000;
     for(let i=0;i<count && !state.cancelled;i++,cycle++,t+=cadence/1000){ tone(ctx,t); const wait=Math.max(0,(t-ctx.currentTime)*1000); await new Promise(r=>setTimeout(r,wait)); const region=spatial[i%spatial.length]; const visual=await flash(intendedOnHoldMs,region); visual.requestedBy=`${id}:${block}`; events.push({block,cycle,intendedOnHoldMs,spatial:region,audioTargetTime:t,visualRequestedAt:visual.visualRequestedAt,onStateAppliedAt:visual.onStateAppliedAt,firstRafAfterOn:visual.firstRafAfterOn,onRafRenderOpportunityCount:visual.onRafRenderOpportunityCount,onRafTimestamps:visual.onRafTimestamps,offStateAppliedAt:visual.offStateAppliedAt,firstRafAfterOff:visual.firstRafAfterOff,visualPresentationDiagnostic:visual}); showDiagnostics(visual); status.textContent=`Running · ${cycle}`; }
   }
-  status.textContent='Stopped'; document.querySelector('#stop').disabled=true; protocolButtons.forEach(button=>button.disabled=false);
+  status.textContent=WEB_TEST_UI_MODE.developer?'Stopped':'Complete'; document.querySelector('#stop').disabled=true; protocolButtons.forEach(button=>button.disabled=false); window.SyncItWebUiMode.setRunning(document,WEB_TEST_UI_MODE,false);
   const blob=new Blob([JSON.stringify({protocol:id,events},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${id}-scheduling-diagnostics.json`; a.textContent='Download scheduling diagnostics'; protocolText.replaceChildren(a);
 }
 const reportError=(source,error)=>{console.error(`V0 web ${source} failed`,error);status.textContent='Web test error — check browser console';diagnosticsText.textContent=`Browser error (${source}): ${error.stack||error}`;};

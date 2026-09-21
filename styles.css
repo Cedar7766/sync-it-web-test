@@ -32,6 +32,7 @@ header,.controls { display:flex; gap:12px; justify-content:center; align-items:c
 #target.flash[data-pulse-region="VERTICAL_80"]::after { top:73%; }
 #target.flash[data-pulse-region="VERTICAL_90"]::after { top:83%; }
 button { font:inherit; padding:10px 16px; }
+button.primary-action { border:1px solid #75d5ff; background:#75d5ff; color:#00151e; font-weight:700; }
 #detail,#protocol,#diagnostics { color:#c8c8c8; }
 #test-identity { margin:8px 0 0; color:#777; font:12px/1.4 ui-monospace,monospace; }
 .developer-controls { margin:14px auto; max-width:1100px; text-align:left; }

@@ -4,10 +4,10 @@ const path = require('path');
 const { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, protocolDurationMs } = require('./protocols.js');
 
 assert.equal(DEFAULT_PROTOCOL_ID, 'V0_WEB_QUICK_V1');
-assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260921-identity-1');
+assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260921-ui-modes-1');
 assert.deepStrictEqual(WEB_TEST_IDENTITY, {
   protocolId: 'V0_WEB_QUICK_V1',
-  buildId: 'v0-web-stimulus-20260921-identity-1'
+  buildId: 'v0-web-stimulus-20260921-ui-modes-1'
 });
 assert.ok(Object.isFrozen(WEB_TEST_IDENTITY));
 
@@ -59,9 +59,10 @@ assert.match(styles, /#target\.flash\[data-pulse-region="CENTRAL_TARGET"\]\s*\{\
 const page = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 assert.match(page, /id="build-version"/, 'the developer page exposes the loaded stimulus build');
 assert.match(page, /id="test-identity"/, 'the page exposes unobtrusive protocol and build identity');
-assert.match(page, /styles\.css\?v=20260921-identity-1/, 'the identity style has a dedicated cache version');
-assert.match(page, /protocols\.js\?v=20260921-identity-1/, 'the identity-bearing protocol script has a dedicated cache version');
-assert.match(page, /stimulus\.js\?v=20260921-identity-1/, 'the identity-rendering script has a dedicated cache version');
+assert.match(page, /styles\.css\?v=20260921-ui-modes-1/, 'the current stylesheet has a dedicated cache version');
+assert.match(page, /protocols\.js\?v=20260921-ui-modes-1/, 'the protocol script has the current build cache version');
+assert.match(page, /ui-mode\.js\?v=20260921-ui-modes-1/, 'the UI-mode script has the current build cache version');
+assert.match(page, /stimulus\.js\?v=20260921-ui-modes-1/, 'the stimulus script has the current build cache version');
 const stimulus = fs.readFileSync(path.join(__dirname, 'stimulus.js'), 'utf8');
 assert.match(stimulus, /window\.SyncItWebTestIdentity=WEB_TEST_IDENTITY/, 'identity is exposed as frozen global state');
 assert.match(stimulus, /dataset\.syncItProtocolId=WEB_TEST_IDENTITY\.protocolId/, 'protocol identity is exposed in the DOM');

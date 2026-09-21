@@ -8,8 +8,17 @@ python3 -m http.server 8000
 ```
 
 Open `http://localhost:8000` in a browser, frame the central target with the
-phone, then choose **Start web test**. The default is `V0_WEB_QUICK_V1` (29.946
-s); `V0_WEB_EXTENDED_V1` is a separate 52.865 s development follow-up.
+phone, then choose **Start Sync-it web test**. The default is
+`V0_WEB_QUICK_V1` (29.946 s); `V0_WEB_EXTENDED_V1` is a separate 52.865 s
+development follow-up.
+
+The default URL, `http://localhost:8000/`, is the volunteer UI. It shows only
+the target, volunteer instruction, status, Quick start/stop lifecycle,
+Fullscreen, and protocol/build identity. Use
+`http://localhost:8000/?developer=1` for the developer UI, which restores
+Extended, protocol diagnostics, and every visual/experiment control. Both
+modes call the same stimulus implementation and protocol definitions; the
+query parameter changes visibility and volunteer-facing status text only.
 
 After Start, the selected protocol repeats until **Stop**. This lets the phone
 join an already-running page and recover a block marker during its own fixed
@@ -37,10 +46,11 @@ static deployment. Its format is
 source, advance `WEB_STIMULUS_BUILD` to a new value and update its assertion in
 `protocols.test.js` in the same commit. The public deployment serves the
 checked-in files unchanged, so the Git commit and unique build string together
-identify the exact page source. Run `node protocols.test.js` and
-`node identity.test.js` before deployment; the tests also freeze the Quick
-protocol structure and 29,946 ms duration and check that the displayed, DOM,
-and global identities agree.
+identify the exact page source. Run `node protocols.test.js`,
+`node identity.test.js`, and `node ui-mode.test.js` before deployment; the
+tests also freeze the Quick protocol structure and 29,946 ms duration, check
+that the displayed, DOM, and global identities agree, and verify the public
+versus `?developer=1` surfaces.
 
 Quick uses a 40 ms intended browser-time white hold for every LOCK,
 QUICK_SWEEP, and CONFIRM event. It remains a browser scheduling intent, not a

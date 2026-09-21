@@ -7,7 +7,7 @@
   // Immutable public-deployment identity. Advance the build string whenever
   // the deployed source changes; protocol definitions remain independent.
   const DEFAULT_PROTOCOL_ID = 'V0_WEB_QUICK_V1';
-  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20260921-identity-1';
+  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20260921-ui-modes-1';
   const PROTOCOLS = {
     V0_WEB_QUICK_V1: [
       ['EPOCH',[250,250],0,1,40,['FULL_TARGET']], ['LOCK',[250,350],5,1000,40,['FULL_TARGET']],
