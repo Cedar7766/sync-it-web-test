@@ -1,5 +1,5 @@
 /* Scheduling diagnostics are provenance only: they are never physical light/audio timestamps. */
-const { PROTOCOLS, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY } = window.V0WebProtocols;
+const { PROTOCOLS, CONSTANT_1HZ_REFERENCE, constantReferenceAudioTargetTime, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY } = window.V0WebProtocols;
 const WEB_TEST_UI_MODE=window.SyncItWebUiMode.apply(document,window.location.search);
 const target=document.getElementById('target'), status=document.querySelector('#status'), protocolText=document.querySelector('#protocol'), diagnosticsText=document.querySelector('#diagnostics'), buildText=document.querySelector('#build-version'), identityText=document.querySelector('#test-identity');
 window.SyncItWebTestIdentity=WEB_TEST_IDENTITY;
@@ -7,8 +7,8 @@ document.documentElement.dataset.syncItProtocolId=WEB_TEST_IDENTITY.protocolId;
 document.documentElement.dataset.syncItBuildId=WEB_TEST_IDENTITY.buildId;
 identityText.textContent=`Protocol ${WEB_TEST_IDENTITY.protocolId} · Build ${WEB_TEST_IDENTITY.buildId}`;
 buildText.textContent=`Loaded stimulus build: ${WEB_STIMULUS_BUILD}`;
-const controls=['quick','extended','developer-vertical-phase-diversity','developer-vertical-dense-sweep','developer-temporal-cadence-sweep','developer-camera-session-phase','developer-five-band-scanout','stop'].map(id=>document.getElementById(id)); let state;
-const protocolButtons=['quick','extended','developer-vertical-phase-diversity','developer-vertical-dense-sweep','developer-temporal-cadence-sweep','developer-camera-session-phase','developer-five-band-scanout'].map(id=>document.getElementById(id));
+const controls=['quick','extended','developer-constant-1hz-reference','developer-vertical-phase-diversity','developer-vertical-dense-sweep','developer-temporal-cadence-sweep','developer-camera-session-phase','developer-five-band-scanout','stop'].map(id=>document.getElementById(id)); let state;
+const protocolButtons=['quick','extended','developer-constant-1hz-reference','developer-vertical-phase-diversity','developer-vertical-dense-sweep','developer-temporal-cadence-sweep','developer-camera-session-phase','developer-five-band-scanout'].map(id=>document.getElementById(id));
 const developerComparisonButtons=['developer-timer-comparison','developer-raf-comparison'].map(id=>document.getElementById(id));
 const tone = (ctx, when) => { const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=2720; g.gain.setValueAtTime(.5,when); o.connect(g).connect(ctx.destination); o.start(when); o.stop(when+.04); };
 const renderer=window.V0WebTargetRenderer.createTargetRenderer(target);
@@ -43,6 +43,7 @@ async function developerPulse(intendedOnHoldMs) {
   showDiagnostics(diagnostic);
 }
 const waitUntil=(deadline)=>new Promise(resolve=>setTimeout(resolve,Math.max(0,deadline-performance.now())));
+const waitForAudioTime=(ctx,targetTime)=>new Promise(resolve=>setTimeout(resolve,Math.max(0,(targetTime-ctx.currentTime)*1000)));
 async function developerComparison(mode) {
   const requestedAt=performance.now();
   console.info('V0 web comparison requested (NON-PHYSICAL)',{mode,requestedAt,target:renderer.snapshot('comparison-button-click')});
@@ -69,6 +70,67 @@ async function developerComparison(mode) {
     developerComparisonButtons.forEach(button=>button.disabled=false);
   }
 }
+async function runConstant1HzReference() {
+  if (!WEB_TEST_UI_MODE.developer) throw new Error('Constant 1 Hz reference is developer-only. Open with ?developer=1.');
+  const mode=CONSTANT_1HZ_REFERENCE;
+  const ctx=new AudioContext(); await ctx.resume();
+  const events=[]; state={cancelled:false,ctx,events,mode:mode.id};
+  controls.forEach(button=>button.disabled=true); document.querySelector('#stop').disabled=false;
+  protocolText.textContent=`${mode.id} · ${WEB_STIMULUS_BUILD}`;
+  // Every cycle derives from one AudioContext epoch. There are no marker tones,
+  // blocks, cadence sweeps, or per-cycle timing-epoch resets in this control.
+  const firstToneTime=ctx.currentTime+.5; let cycle=0;
+  status.textContent='Constant 1 Hz reference armed';
+  showDiagnostics({
+    selectedMode:mode.id, intendedCadenceMs:mode.cadenceMs,
+    intendedFlashToneOffsetMs:mode.intendedFlashToneOffsetMs, cycleCount:0
+  });
+  try {
+    while (!state.cancelled) {
+      const audioTargetTime=constantReferenceAudioTargetTime(firstToneTime,cycle);
+      const audioSchedulingLeadMs=(audioTargetTime-ctx.currentTime)*1000;
+      tone(ctx,audioTargetTime);
+      const visualTargetTime=audioTargetTime+mode.intendedFlashToneOffsetMs/1000;
+      await waitForAudioTime(ctx,visualTargetTime);
+      if (state.cancelled) break;
+      const visualRequestAudioTime=ctx.currentTime;
+      const visual=await flash(mode.intendedOnHoldMs,mode.region);
+      const visualScheduleLatenessMs=(visualRequestAudioTime-visualTargetTime)*1000;
+      const event={
+        cycle:cycle+1, audioTargetTime, visualTargetTime, audioSchedulingLeadMs,
+        intendedFlashToneOffsetMs:mode.intendedFlashToneOffsetMs,
+        visualScheduleLatenessMs, intendedOnHoldMs:mode.intendedOnHoldMs,
+        spatial:mode.region, visualRequestedAt:visual.visualRequestedAt,
+        onStateAppliedAt:visual.onStateAppliedAt, firstRafAfterOn:visual.firstRafAfterOn,
+        onRafRenderOpportunityCount:visual.onRafRenderOpportunityCount,
+        onRafTimestamps:visual.onRafTimestamps, offStateAppliedAt:visual.offStateAppliedAt,
+        firstRafAfterOff:visual.firstRafAfterOff, visualPresentationDiagnostic:visual
+      };
+      events.push(event);
+      showDiagnostics({
+        selectedMode:mode.id, intendedCadenceMs:mode.cadenceMs,
+        intendedFlashToneOffsetMs:mode.intendedFlashToneOffsetMs,
+        cycleCount:event.cycle, audioSchedulingLeadMs, visualScheduleLatenessMs,
+        renderOpportunity:visual
+      });
+      status.textContent=`Constant 1 Hz reference · ${event.cycle} cycles`;
+      cycle+=1;
+    }
+  } finally {
+    const cancelled=state.cancelled;
+    state={cancelled:true,ctx,events,mode:mode.id}; document.querySelector('#stop').disabled=true;
+    protocolButtons.forEach(button=>button.disabled=false);
+    status.textContent=cancelled?'Constant 1 Hz reference stopped':`Constant 1 Hz reference complete (${events.length} cycles)`;
+    const blob=new Blob([JSON.stringify({
+      schema:'v0-web-constant-1hz-reference-dev-v1', selectedMode:mode.id,
+      intendedCadenceMs:mode.cadenceMs, intendedFlashToneOffsetMs:mode.intendedFlashToneOffsetMs,
+      toneFrequencyHz:mode.toneFrequencyHz, intendedOnHoldMs:mode.intendedOnHoldMs,
+      targetRegion:mode.region, firstToneTime, events,
+      diagnosticsClassification:'NON_PHYSICAL_BROWSER_PROVENANCE'
+    },null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='constant-1hz-reference-browser-diagnostics.json'; a.textContent='Download constant 1 Hz browser diagnostics'; protocolText.replaceChildren(a);
+  }
+}
 async function run(id) { const ctx=new AudioContext(); await ctx.resume(); const events=[]; state={cancelled:false,ctx,events}; controls.forEach(b=>b.disabled=true); document.querySelector('#stop').disabled=false; window.SyncItWebUiMode.setRunning(document,WEB_TEST_UI_MODE,true); if(!WEB_TEST_UI_MODE.developer)status.textContent='Running';
   let t=ctx.currentTime+.25, cycle=0;
   while (!state.cancelled) for (const [block,gaps,count,cadence,intendedOnHoldMs,spatial,markerDurationMs=1000] of PROTOCOLS[id]) { if(state.cancelled) break; protocolText.textContent=`${id} · ${block} · ${WEB_STIMULUS_BUILD}`;
@@ -80,4 +142,4 @@ async function run(id) { const ctx=new AudioContext(); await ctx.resume(); const
   const blob=new Blob([JSON.stringify({protocol:id,events},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${id}-scheduling-diagnostics.json`; a.textContent='Download scheduling diagnostics'; protocolText.replaceChildren(a);
 }
 const reportError=(source,error)=>{console.error(`V0 web ${source} failed`,error);status.textContent='Web test error — check browser console';diagnosticsText.textContent=`Browser error (${source}): ${error.stack||error}`;};
-document.querySelector('#quick').onclick=()=>run('V0_WEB_QUICK_V1').catch(error=>reportError('quick protocol',error)); document.querySelector('#extended').onclick=()=>run('V0_WEB_EXTENDED_V1').catch(error=>reportError('extended protocol',error)); document.querySelector('#developer-vertical-phase-diversity').onclick=()=>run('V0_WEB_VERTICAL_PHASE_DIVERSITY_V1').catch(error=>reportError('vertical phase-diversity protocol',error)); document.querySelector('#developer-vertical-dense-sweep').onclick=()=>run('V0_WEB_VERTICAL_DENSE_SWEEP_V1').catch(error=>reportError('vertical dense-sweep protocol',error)); document.querySelector('#developer-temporal-cadence-sweep').onclick=()=>run('V0_WEB_TEMPORAL_CADENCE_SWEEP_V1').catch(error=>reportError('temporal cadence-sweep protocol',error)); document.querySelector('#developer-camera-session-phase').onclick=()=>run('V0_WEB_CAMERA_SESSION_PHASE_V1').catch(error=>reportError('camera-session phase protocol',error)); document.querySelector('#developer-five-band-scanout').onclick=()=>run('V0_WEB_FIVE_BAND_SCANOUT_LADDER_V1').catch(error=>reportError('five-band scanout ladder protocol',error)); document.querySelector('#stop').onclick=()=>{if(state)state.cancelled=true}; document.querySelector('#fullscreen').onclick=()=>document.documentElement.requestFullscreen?.(); document.querySelector('#developer-moderate').onclick=()=>developerPulse(40).catch(error=>reportError('40 ms developer pulse',error)); document.querySelector('#developer-long').onclick=()=>developerPulse(200).catch(error=>reportError('200 ms developer pulse',error)); document.querySelector('#developer-timer-comparison').onclick=()=>developerComparison('TIMER_DRIVEN').catch(error=>reportError('timer-driven comparison',error)); document.querySelector('#developer-raf-comparison').onclick=()=>developerComparison('RAF_ALIGNED').catch(error=>reportError('rAF-aligned comparison',error));
+document.querySelector('#quick').onclick=()=>run('V0_WEB_QUICK_V1').catch(error=>reportError('quick protocol',error)); document.querySelector('#extended').onclick=()=>run('V0_WEB_EXTENDED_V1').catch(error=>reportError('extended protocol',error)); document.querySelector('#developer-constant-1hz-reference').onclick=()=>runConstant1HzReference().catch(error=>reportError('constant 1 Hz reference',error)); document.querySelector('#developer-vertical-phase-diversity').onclick=()=>run('V0_WEB_VERTICAL_PHASE_DIVERSITY_V1').catch(error=>reportError('vertical phase-diversity protocol',error)); document.querySelector('#developer-vertical-dense-sweep').onclick=()=>run('V0_WEB_VERTICAL_DENSE_SWEEP_V1').catch(error=>reportError('vertical dense-sweep protocol',error)); document.querySelector('#developer-temporal-cadence-sweep').onclick=()=>run('V0_WEB_TEMPORAL_CADENCE_SWEEP_V1').catch(error=>reportError('temporal cadence-sweep protocol',error)); document.querySelector('#developer-camera-session-phase').onclick=()=>run('V0_WEB_CAMERA_SESSION_PHASE_V1').catch(error=>reportError('camera-session phase protocol',error)); document.querySelector('#developer-five-band-scanout').onclick=()=>run('V0_WEB_FIVE_BAND_SCANOUT_LADDER_V1').catch(error=>reportError('five-band scanout ladder protocol',error)); document.querySelector('#stop').onclick=()=>{if(state)state.cancelled=true}; document.querySelector('#fullscreen').onclick=()=>document.documentElement.requestFullscreen?.(); document.querySelector('#developer-moderate').onclick=()=>developerPulse(40).catch(error=>reportError('40 ms developer pulse',error)); document.querySelector('#developer-long').onclick=()=>developerPulse(200).catch(error=>reportError('200 ms developer pulse',error)); document.querySelector('#developer-timer-comparison').onclick=()=>developerComparison('TIMER_DRIVEN').catch(error=>reportError('timer-driven comparison',error)); document.querySelector('#developer-raf-comparison').onclick=()=>developerComparison('RAF_ALIGNED').catch(error=>reportError('rAF-aligned comparison',error));

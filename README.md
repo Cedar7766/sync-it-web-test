@@ -57,6 +57,22 @@ QUICK_SWEEP, and CONFIRM event. It remains a browser scheduling intent, not a
 claim about monitor light duration. Extended compares the same 40 ms moderate
 hold with a 200 ms long hold; it no longer compares rAF callback counts.
 
+## Developer constant 1 Hz reference
+
+**Developer-only; it does not change Quick, Extended, or any qualification
+protocol.** Open `?developer=1`, then select **Constant 1 Hz reference**. The
+developer primary control is labelled **Current temporal protocol** and still
+runs unchanged `V0_WEB_QUICK_V1` for a direct comparison.
+
+The constant reference uses one AudioContext epoch and targets one 2720 Hz tone
+and one central-target 40 ms visual pulse every 1,000 ms until **Stop**. The
+intended flash-to-tone offset is 0 ms. It has no marker identities, lock or
+confirm blocks, cadence sweep, or per-cycle epoch reset. Downloaded diagnostics
+record the selected mode, intended cadence/offset, cycle count, audio scheduling
+lead, visual scheduling lateness, and existing rAF render opportunities. Those
+browser values are scheduling provenance only, never physical optical or audio
+timing truth.
+
 ## Presentation diagnostics
 
 Each visual event records `visualRequestedAt`, ON/OFF state-application times,

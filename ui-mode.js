@@ -15,7 +15,7 @@
       element.hidden = !developer;
     });
     document.getElementById('quick').textContent = developer
-      ? 'Start web test'
+      ? 'Current temporal protocol'
       : 'Start Sync-it web test';
     document.getElementById('detail').textContent = developer
       ? 'Choose the short test unless you were asked to run the extended test.'

@@ -6,7 +6,7 @@ const uiMode = require('./ui-mode.js');
 
 const elementIds = [
   'target', 'status', 'detail', 'protocol', 'diagnostics', 'build-version', 'test-identity',
-  'quick', 'extended', 'fullscreen', 'stop', 'developer-moderate',
+  'quick', 'extended', 'fullscreen', 'stop', 'developer-constant-1hz-reference', 'developer-moderate',
   'developer-long', 'developer-timer-comparison', 'developer-raf-comparison',
   'developer-vertical-phase-diversity', 'developer-vertical-dense-sweep',
   'developer-temporal-cadence-sweep', 'developer-camera-session-phase',
@@ -55,12 +55,12 @@ vm.runInNewContext(fs.readFileSync('stimulus.js', 'utf8'), {
 assert.strictEqual(window.SyncItWebTestIdentity, protocols.WEB_TEST_IDENTITY);
 assert.deepStrictEqual(documentElement.dataset, {
   syncItProtocolId: 'V0_WEB_QUICK_V1',
-  syncItBuildId: 'v0-web-stimulus-20260921-ui-modes-1',
+  syncItBuildId: 'v0-web-stimulus-20260923-constant-reference-1',
   syncItDeveloperMode: 'false'
 });
 assert.strictEqual(
   elements['test-identity'].textContent,
-  'Protocol V0_WEB_QUICK_V1 · Build v0-web-stimulus-20260921-ui-modes-1'
+  'Protocol V0_WEB_QUICK_V1 · Build v0-web-stimulus-20260923-constant-reference-1'
 );
 assert.strictEqual(typeof elements.quick.onclick, 'function');
 

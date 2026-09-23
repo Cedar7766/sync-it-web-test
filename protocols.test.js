@@ -1,13 +1,13 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, protocolDurationMs } = require('./protocols.js');
+const { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, CONSTANT_1HZ_REFERENCE, constantReferenceAudioTargetTime, protocolDurationMs } = require('./protocols.js');
 
 assert.equal(DEFAULT_PROTOCOL_ID, 'V0_WEB_QUICK_V1');
-assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260921-ui-modes-1');
+assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260923-constant-reference-1');
 assert.deepStrictEqual(WEB_TEST_IDENTITY, {
   protocolId: 'V0_WEB_QUICK_V1',
-  buildId: 'v0-web-stimulus-20260921-ui-modes-1'
+  buildId: 'v0-web-stimulus-20260923-constant-reference-1'
 });
 assert.ok(Object.isFrozen(WEB_TEST_IDENTITY));
 
@@ -20,6 +20,19 @@ assert.deepStrictEqual(PROTOCOLS.V0_WEB_QUICK_V1, [
   ['CONFIRM', [350, 350], 3, 1000, 40, ['FULL_TARGET']]
 ]);
 assert.strictEqual(protocolDurationMs('V0_WEB_QUICK_V1'), 29946);
+
+assert.deepStrictEqual(CONSTANT_1HZ_REFERENCE, {
+  id: 'V0_WEB_CONSTANT_1HZ_REFERENCE_DEV_V1',
+  cadenceMs: 1000,
+  toneFrequencyHz: 2720,
+  intendedFlashToneOffsetMs: 0,
+  intendedOnHoldMs: 40,
+  region: 'CENTRAL_TARGET'
+});
+assert.ok(Object.isFrozen(CONSTANT_1HZ_REFERENCE));
+assert.strictEqual(constantReferenceAudioTargetTime(10, 0), 10);
+assert.strictEqual(constantReferenceAudioTargetTime(10, 1), 11);
+assert.strictEqual(constantReferenceAudioTargetTime(10, 30), 40);
 
 const vertical = PROTOCOLS.V0_WEB_VERTICAL_PHASE_DIVERSITY_V1;
 assert.deepStrictEqual(vertical.map(([block]) => block), [
@@ -59,15 +72,22 @@ assert.match(styles, /#target\.flash\[data-pulse-region="CENTRAL_TARGET"\]\s*\{\
 const page = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 assert.match(page, /id="build-version"/, 'the developer page exposes the loaded stimulus build');
 assert.match(page, /id="test-identity"/, 'the page exposes unobtrusive protocol and build identity');
-assert.match(page, /styles\.css\?v=20260921-ui-modes-1/, 'the current stylesheet has a dedicated cache version');
-assert.match(page, /protocols\.js\?v=20260921-ui-modes-1/, 'the protocol script has the current build cache version');
-assert.match(page, /ui-mode\.js\?v=20260921-ui-modes-1/, 'the UI-mode script has the current build cache version');
-assert.match(page, /stimulus\.js\?v=20260921-ui-modes-1/, 'the stimulus script has the current build cache version');
+assert.match(page, /styles\.css\?v=20260923-constant-reference-1/, 'the current stylesheet has a dedicated cache version');
+assert.match(page, /protocols\.js\?v=20260923-constant-reference-1/, 'the protocol script has the current build cache version');
+assert.match(page, /ui-mode\.js\?v=20260923-constant-reference-1/, 'the UI-mode script has the current build cache version');
+assert.match(page, /stimulus\.js\?v=20260923-constant-reference-1/, 'the stimulus script has the current build cache version');
+assert.match(page, /id="developer-constant-1hz-reference" data-developer-only hidden/, 'constant reference is not present in the volunteer control surface');
 const stimulus = fs.readFileSync(path.join(__dirname, 'stimulus.js'), 'utf8');
 assert.match(stimulus, /window\.SyncItWebTestIdentity=WEB_TEST_IDENTITY/, 'identity is exposed as frozen global state');
 assert.match(stimulus, /dataset\.syncItProtocolId=WEB_TEST_IDENTITY\.protocolId/, 'protocol identity is exposed in the DOM');
 assert.match(stimulus, /dataset\.syncItBuildId=WEB_TEST_IDENTITY\.buildId/, 'build identity is exposed in the DOM');
 assert.match(stimulus, /querySelector\('#quick'\)\.onclick=\(\)=>run\('V0_WEB_QUICK_V1'\)/, 'normal Start web test path remains Quick V1');
+const constantScheduler = stimulus.slice(stimulus.indexOf('async function runConstant1HzReference'), stimulus.indexOf('async function run(id)'));
+assert.match(constantScheduler, /const firstToneTime=ctx\.currentTime\+\.5/, 'constant reference starts one shared AudioContext epoch');
+assert.match(constantScheduler, /constantReferenceAudioTargetTime\(firstToneTime,cycle\)/, 'cycle timing is derived from that epoch');
+assert.match(constantScheduler, /visualTargetTime=audioTargetTime\+mode\.intendedFlashToneOffsetMs\/1000/, 'flash/tone relationship is explicitly fixed');
+assert.match(constantScheduler, /flash\(mode\.intendedOnHoldMs,mode\.region\)/, 'constant reference uses the central target renderer');
+assert.doesNotMatch(constantScheduler, /PROTOCOLS|Marker triple|gaps/, 'constant reference does not run a protocol block or cadence sweep');
 assert.strictEqual(protocolDurationMs('V0_WEB_TEMPORAL_CADENCE_SWEEP_V1'), 44200);
 
 const cameraSession = PROTOCOLS.V0_WEB_CAMERA_SESSION_PHASE_V1;

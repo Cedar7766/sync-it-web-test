@@ -8,6 +8,7 @@ const createPage = () => {
     extended: { hidden: true },
     fullscreen: { hidden: false },
     stop: { hidden: true },
+    constantReference: { hidden: true },
     detail: { hidden: false, textContent: '' },
     developerControls: { hidden: true },
     protocol: { hidden: true },
@@ -21,7 +22,7 @@ const createPage = () => {
       documentElement: { dataset: {} },
       getElementById: id => elements[id],
       querySelectorAll: selector => selector === '[data-developer-only]'
-        ? [elements.extended, elements.developerControls, elements.protocol]
+        ? [elements.extended, elements.constantReference, elements.developerControls, elements.protocol]
         : selector === '[data-volunteer-running-only]'
           ? [elements.stop]
           : []
@@ -40,6 +41,7 @@ assert.deepStrictEqual(volunteerMode, { developer: false });
 assert.strictEqual(volunteer.document.documentElement.dataset.syncItDeveloperMode, 'false');
 assert.strictEqual(volunteer.elements.quick.textContent, 'Start Sync-it web test');
 assert.strictEqual(volunteer.elements.extended.hidden, true);
+assert.strictEqual(volunteer.elements.constantReference.hidden, true);
 assert.strictEqual(volunteer.elements.developerControls.hidden, true);
 assert.strictEqual(volunteer.elements.protocol.hidden, true);
 assert.strictEqual(volunteer.elements.stop.hidden, true);
@@ -62,8 +64,9 @@ const developer = createPage();
 const developerMode = uiMode.apply(developer.document, '?developer=1');
 assert.deepStrictEqual(developerMode, { developer: true });
 assert.strictEqual(developer.document.documentElement.dataset.syncItDeveloperMode, 'true');
-assert.strictEqual(developer.elements.quick.textContent, 'Start web test');
+assert.strictEqual(developer.elements.quick.textContent, 'Current temporal protocol');
 assert.strictEqual(developer.elements.extended.hidden, false);
+assert.strictEqual(developer.elements.constantReference.hidden, false);
 assert.strictEqual(developer.elements.developerControls.hidden, false);
 assert.strictEqual(developer.elements.protocol.hidden, false);
 assert.strictEqual(developer.elements.stop.hidden, false);

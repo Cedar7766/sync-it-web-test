@@ -7,7 +7,19 @@
   // Immutable public-deployment identity. Advance the build string whenever
   // the deployed source changes; protocol definitions remain independent.
   const DEFAULT_PROTOCOL_ID = 'V0_WEB_QUICK_V1';
-  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20260921-ui-modes-1';
+  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20260923-constant-reference-1';
+  // Developer-only control source. It intentionally is not expressed as a
+  // marker/block protocol: every cycle is one ordinary simultaneous A/V event.
+  const CONSTANT_1HZ_REFERENCE = Object.freeze({
+    id: 'V0_WEB_CONSTANT_1HZ_REFERENCE_DEV_V1',
+    cadenceMs: 1000,
+    toneFrequencyHz: 2720,
+    intendedFlashToneOffsetMs: 0,
+    intendedOnHoldMs: 40,
+    region: 'CENTRAL_TARGET'
+  });
+  const constantReferenceAudioTargetTime = (firstToneTime, cycle) =>
+    firstToneTime + cycle * CONSTANT_1HZ_REFERENCE.cadenceMs / 1000;
   const PROTOCOLS = {
     V0_WEB_QUICK_V1: [
       ['EPOCH',[250,250],0,1,40,['FULL_TARGET']], ['LOCK',[250,350],5,1000,40,['FULL_TARGET']],
@@ -70,5 +82,8 @@
     protocolId: DEFAULT_PROTOCOL_ID,
     buildId: WEB_STIMULUS_BUILD
   });
-  return { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, protocolDurationMs };
+  return {
+    DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS,
+    CONSTANT_1HZ_REFERENCE, constantReferenceAudioTargetTime, protocolDurationMs
+  };
 });
