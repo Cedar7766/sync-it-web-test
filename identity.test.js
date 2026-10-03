@@ -55,12 +55,12 @@ vm.runInNewContext(fs.readFileSync('stimulus.js', 'utf8'), {
 assert.strictEqual(window.SyncItWebTestIdentity, protocols.WEB_TEST_IDENTITY);
 assert.deepStrictEqual(documentElement.dataset, {
   syncItProtocolId: 'V0_WEB_QUICK_V1',
-  syncItBuildId: 'v0-web-stimulus-20261003-branding-guide-1',
+  syncItBuildId: 'v0-web-stimulus-20261003-framing-guide-2',
   syncItDeveloperMode: 'false'
 });
 assert.strictEqual(
   elements['test-identity'].textContent,
-  'Protocol V0_WEB_QUICK_V1 · Build v0-web-stimulus-20261003-branding-guide-1'
+  'Protocol V0_WEB_QUICK_V1 · Build v0-web-stimulus-20261003-framing-guide-2'
 );
 assert.strictEqual(typeof elements.quick.onclick, 'function');
 

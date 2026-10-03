@@ -7,7 +7,7 @@
   // Immutable public-deployment identity. Advance the build string whenever
   // the deployed source changes; protocol definitions remain independent.
   const DEFAULT_PROTOCOL_ID = 'V0_WEB_QUICK_V1';
-  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20261003-branding-guide-1';
+  const WEB_STIMULUS_BUILD = 'v0-web-stimulus-20261003-framing-guide-2';
   // Developer-only control source. It intentionally is not expressed as a
   // marker/block protocol: every cycle is one ordinary simultaneous A/V event.
   const CONSTANT_1HZ_REFERENCE = Object.freeze({
