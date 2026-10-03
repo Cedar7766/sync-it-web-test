@@ -24,6 +24,11 @@
   };
 
   const setRunning = (document, mode, running) => {
+    const target = document.getElementById('target');
+    if (target) {
+      if (running) target.dataset.syncItStimulusRunning = 'true';
+      else delete target.dataset.syncItStimulusRunning;
+    }
     if (mode.developer) return;
     document.getElementById('quick').hidden = running;
     document.getElementById('stop').hidden = !running;

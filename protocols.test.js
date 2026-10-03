@@ -4,10 +4,10 @@ const path = require('path');
 const { DEFAULT_PROTOCOL_ID, WEB_STIMULUS_BUILD, WEB_TEST_IDENTITY, PROTOCOLS, CONSTANT_1HZ_REFERENCE, constantReferenceAudioTargetTime, protocolDurationMs } = require('./protocols.js');
 
 assert.equal(DEFAULT_PROTOCOL_ID, 'V0_WEB_QUICK_V1');
-assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20260923-constant-reference-1');
+assert.equal(WEB_STIMULUS_BUILD, 'v0-web-stimulus-20261003-branding-guide-1');
 assert.deepStrictEqual(WEB_TEST_IDENTITY, {
   protocolId: 'V0_WEB_QUICK_V1',
-  buildId: 'v0-web-stimulus-20260923-constant-reference-1'
+  buildId: 'v0-web-stimulus-20261003-branding-guide-1'
 });
 assert.ok(Object.isFrozen(WEB_TEST_IDENTITY));
 
@@ -72,11 +72,15 @@ assert.match(styles, /#target\.flash\[data-pulse-region="CENTRAL_TARGET"\]\s*\{\
 const page = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 assert.match(page, /id="build-version"/, 'the developer page exposes the loaded stimulus build');
 assert.match(page, /id="test-identity"/, 'the page exposes unobtrusive protocol and build identity');
-assert.match(page, /styles\.css\?v=20260923-constant-reference-1/, 'the current stylesheet has a dedicated cache version');
-assert.match(page, /protocols\.js\?v=20260923-constant-reference-1/, 'the protocol script has the current build cache version');
-assert.match(page, /ui-mode\.js\?v=20260923-constant-reference-1/, 'the UI-mode script has the current build cache version');
-assert.match(page, /stimulus\.js\?v=20260923-constant-reference-1/, 'the stimulus script has the current build cache version');
+assert.match(page, /styles\.css\?v=20261003-branding-guide-1/, 'the current stylesheet has a dedicated cache version');
+assert.match(page, /protocols\.js\?v=20261003-branding-guide-1/, 'the protocol script has the current build cache version');
+assert.match(page, /ui-mode\.js\?v=20261003-branding-guide-1/, 'the UI-mode script has the current build cache version');
+assert.match(page, /stimulus\.js\?v=20261003-branding-guide-1/, 'the stimulus script has the current build cache version');
+assert.match(page, /<img class="syncit-logo" src="images\/sync-it-logo\.png" alt="Sync-it">/, 'the volunteer page presents the Sync-it logo');
+assert.match(page, /<div id="target" aria-label="Dark Web stimulus stage"><div class="framing-guide" aria-hidden="true"><\/div><\/div>/, 'the stimulus stage contains a non-interactive framing guide');
 assert.match(page, /id="developer-constant-1hz-reference" data-developer-only hidden/, 'constant reference is not present in the volunteer control surface');
+assert.match(styles, /\.framing-guide\s*\{[^}]*left:50%;[^}]*top:50%;[^}]*aspect-ratio:1;[^}]*border-radius:50%;[^}]*pointer-events:none;/, 'the framing guide remains a centred, circular non-interactive overlay');
+assert.match(styles, /#target\[data-sync-it-stimulus-running="true"\] \.framing-guide\s*\{\s*opacity:0;\s*\}/, 'the framing guide is hidden during an active stimulus');
 const stimulus = fs.readFileSync(path.join(__dirname, 'stimulus.js'), 'utf8');
 assert.match(stimulus, /window\.SyncItWebTestIdentity=WEB_TEST_IDENTITY/, 'identity is exposed as frozen global state');
 assert.match(stimulus, /dataset\.syncItProtocolId=WEB_TEST_IDENTITY\.protocolId/, 'protocol identity is exposed in the DOM');

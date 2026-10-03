@@ -12,7 +12,7 @@ const createPage = () => {
     detail: { hidden: false, textContent: '' },
     developerControls: { hidden: true },
     protocol: { hidden: true },
-    target: { hidden: false },
+    target: { hidden: false, dataset: {} },
     status: { hidden: false },
     identity: { hidden: false }
   };
@@ -54,9 +54,11 @@ assert.strictEqual(
   'On your phone, follow the Sync-it app instructions, then press Start.'
 );
 uiMode.setRunning(volunteer.document, volunteerMode, true);
+assert.equal(volunteer.elements.target.dataset.syncItStimulusRunning, 'true');
 assert.strictEqual(volunteer.elements.quick.hidden, true);
 assert.strictEqual(volunteer.elements.stop.hidden, false);
 uiMode.setRunning(volunteer.document, volunteerMode, false);
+assert.equal(volunteer.elements.target.dataset.syncItStimulusRunning, undefined);
 assert.strictEqual(volunteer.elements.quick.hidden, false);
 assert.strictEqual(volunteer.elements.stop.hidden, true);
 
